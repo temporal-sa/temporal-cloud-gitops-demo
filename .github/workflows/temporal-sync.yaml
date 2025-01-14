@@ -11,7 +11,7 @@ env:
   PREVIOUS_REVISION: temporal-previous.yaml
   CURRENT_REVISION: temporal.yaml
   TEMPORAL_CLOUD_ADDRESS: ap-southeast-2.aws.api.temporal.io:7233
-  TEMPORAL_CLOUD_NAMESPACE: control-plane.cpxpy
+  TEMPORAL_CLOUD_NAMESPACE: gitops-demo.sdvdw
   TASK_QUEUE: github-actions
   WORKFLOW_TYPE: GitOpsWorkflow
 
