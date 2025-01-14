@@ -1,0 +1,87 @@
+name: Add/Remove Temporal Projects
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'temporal.yaml'
+
+env:
+  PREVIOUS_REVISION: temporal-previous.yaml
+  CURRENT_REVISION: temporal.yaml
+  TEMPORAL_CLOUD_ADDRESS: ap-southeast-2.aws.api.temporal.io:7233
+  TEMPORAL_CLOUD_NAMESPACE: control-plane.cpxpy
+  TASK_QUEUE: github-actions
+  WORKFLOW_TYPE: GitOpsWorkflow
+
+jobs:
+  add-remove-projects:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 2
+
+      - name: Install Temporal CLI
+        uses: temporalio/setup-temporal@v0
+      
+      - name: Get previous commit hash
+        id: prev-commit
+        run: echo "prev_commit=$(git rev-parse HEAD~1)" >> $GITHUB_ENV
+
+      - name: Extract previous YAML file
+        run: |
+          git show ${{ env.prev_commit }}:${{ env.CURRENT_REVISION }} > ${{ env.PREVIOUS_REVISION }}
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install pyyaml
+      
+      - name: Detect added and removed namespaces
+        id: detect-changes
+        run: python get-changes.py --prev ${{ env.PREVIOUS_REVISION }} --curr ${{ env.CURRENT_REVISION }}
+
+      - name: Create added Temporal Projects
+        run: |
+          echo "$added_namespaces" | jq -c '.[]' | while read namespace; do
+            name=$(echo "$namespace" | jq -r '.name')
+            region=$(echo "$namespace" | jq -r '.region')
+
+            echo "Creating project: $name in region: $region"
+
+            temporal workflow start \
+              --workflow-id $name \
+              --task-queue ${{ env.TASK_QUEUE }} \
+              --type ${{ env.WORKFLOW_TYPE }} \
+              --input "{\"ProjectName\": \"$name\", \"Region\": \"$region\"}" \
+              --address ${{ env.TEMPORAL_CLOUD_ADDRESS }} \
+              --namespace ${{ env.TEMPORAL_CLOUD_NAMESPACE }} \
+              --grpc-meta "temporal-namespace=${{ env.TEMPORAL_CLOUD_NAMESPACE }}" \
+              --tls \
+              --api-key ${{ secrets.TEMPORAL_CLOUD_API_KEY }}
+          done
+        env:
+          added_namespaces: ${{ steps.detect-changes.outputs.added_namespaces }}
+
+      - name: Delete removed Temporal Projects
+        run: |
+          echo "$removed_namespaces" | jq -c '.[]' | while read namespace; do
+            name=$(echo "$namespace" | jq -r '.name')
+            region=$(echo "$namespace" | jq -r '.region')
+
+            echo "Deleting project: $name in region: $region"
+
+            temporal workflow signal \
+              --workflow-id $name \
+              --type destroy \
+              --address ${{ env.TEMPORAL_CLOUD_ADDRESS }} \
+              --namespace ${{ env.TEMPORAL_CLOUD_NAMESPACE }} \
+              --grpc-meta "temporal-namespace=${{ env.TEMPORAL_CLOUD_NAMESPACE }}" \
+              --tls \
+              --api-key ${{ secrets.TEMPORAL_CLOUD_API_KEY }}
+          done
+        env:
+          removed_namespaces: ${{ steps.detect-changes.outputs.removed_namespaces }}
