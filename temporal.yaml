@@ -16,8 +16,6 @@
 namespaces:
   - name: created-by-gitops
     region: ap-southeast-2
-  - name: steve-is-cool
-    region: us-east-1
 
 # currently not supported
 users: []
