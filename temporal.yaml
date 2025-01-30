@@ -13,9 +13,7 @@
 #     role: read-only
 # 
 
-namespaces:
-  - name: demo-gitops-project
-    region: ap-southeast-2
+namespaces: []
 
 # currently not supported
 users: []
