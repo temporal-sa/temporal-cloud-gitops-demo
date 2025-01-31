@@ -19,4 +19,4 @@ namespaces:
 
 users: 
   - email: brendan@example.com
-    role: readonly
+    role: admin
