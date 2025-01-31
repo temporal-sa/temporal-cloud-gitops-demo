@@ -17,6 +17,4 @@ namespaces:
   - name: demo-gitops-project
     region: ap-southeast-2
 
-users: 
-  - email: brendan@example.com
-    role: admin
+users: []
