@@ -13,7 +13,10 @@ env:
   TEMPORAL_CLOUD_ADDRESS: ap-southeast-2.aws.api.temporal.io:7233
   TEMPORAL_CLOUD_NAMESPACE: gitops-demo.sdvdw
   TASK_QUEUE: github-actions
-  WORKFLOW_TYPE: GitOpsWorkflow
+  PROJECT_WORKFLOW_TYPE: ProjectLifecycleWorkflow
+  CREATE_USER_WORKFLOW_TYPE: CreateUserWorkflow
+  UPDATE_USER_WORKFLOW_TYPE: UpdateUserWorkflow
+  DELETE_USER_WORKFLOW_TYPE: DeleteUserWorkflow
 
 jobs:
   add-remove-projects:
@@ -45,6 +48,9 @@ jobs:
         run: python get-changes.py --prev ${{ env.PREVIOUS_REVISION }} --curr ${{ env.CURRENT_REVISION }}
 
       - name: Create added Temporal Projects
+        continue-on-error: true
+        env:
+          added_namespaces: ${{ steps.detect-changes.outputs.added_namespaces }}
         run: |
           echo "$added_namespaces" | jq -c '.[]' | while read namespace; do
             name=$(echo "$namespace" | jq -r '.name')
@@ -55,7 +61,7 @@ jobs:
             temporal workflow start \
               --workflow-id $name \
               --task-queue ${{ env.TASK_QUEUE }} \
-              --type ${{ env.WORKFLOW_TYPE }} \
+              --type ${{ env.PROJECT_WORKFLOW_TYPE }} \
               --input "{\"ProjectName\": \"$name\", \"Region\": \"$region\"}" \
               --address ${{ env.TEMPORAL_CLOUD_ADDRESS }} \
               --namespace ${{ env.TEMPORAL_CLOUD_NAMESPACE }} \
@@ -63,10 +69,11 @@ jobs:
               --tls \
               --api-key ${{ secrets.TEMPORAL_CLOUD_API_KEY }}
           done
-        env:
-          added_namespaces: ${{ steps.detect-changes.outputs.added_namespaces }}
 
       - name: Delete removed Temporal Projects
+        continue-on-error: true
+        env:
+          removed_namespaces: ${{ steps.detect-changes.outputs.removed_namespaces }}
         run: |
           echo "$removed_namespaces" | jq -c '.[]' | while read namespace; do
             name=$(echo "$namespace" | jq -r '.name')
@@ -83,5 +90,71 @@ jobs:
               --tls \
               --api-key ${{ secrets.TEMPORAL_CLOUD_API_KEY }}
           done
+
+      - name: Create new Temporal users
+        continue-on-error: true
         env:
-          removed_namespaces: ${{ steps.detect-changes.outputs.removed_namespaces }}
+          added_users: ${{ steps.detect-changes.outputs.added_users }}
+        run: |
+          echo "$added_users" | jq -c '.[]' | while read user; do
+            email=$(echo "$user" | jq -r '.email')
+            role=$(echo "$user" | jq -r '.role')
+
+            echo "Creating user: $email with role: $role"
+
+            temporal workflow start \
+              --workflow-id $email \
+              --task-queue ${{ env.TASK_QUEUE }} \
+              --type ${{ env.CREATE_USER_WORKFLOW_TYPE }} \
+              --input "{\"Email\": \"$email\", \"Role\": \"$role\"}" \
+              --address ${{ env.TEMPORAL_CLOUD_ADDRESS }} \
+              --namespace ${{ env.TEMPORAL_CLOUD_NAMESPACE }} \
+              --grpc-meta "temporal-namespace=${{ env.TEMPORAL_CLOUD_NAMESPACE }}" \
+              --tls \
+              --api-key ${{ secrets.TEMPORAL_CLOUD_API_KEY }}
+          done
+
+      - name: Update modified Temporal users
+        continue-on-error: true
+        env:
+          modified_users: ${{ steps.detect-changes.outputs.modified_users }}
+        run: |
+          echo "$modified_users" | jq -c '.[]' | while read user; do
+            email=$(echo "$user" | jq -r '.email')
+            role=$(echo "$user" | jq -r '.role')
+
+            echo "Modifying user: $email with role: $role"
+
+            temporal workflow start \
+              --workflow-id $email \
+              --task-queue ${{ env.TASK_QUEUE }} \
+              --type ${{ env.UPDATE_USER_WORKFLOW_TYPE }} \
+              --input "{\"Email\": \"$email\", \"Role\": \"$role\"}" \
+              --address ${{ env.TEMPORAL_CLOUD_ADDRESS }} \
+              --namespace ${{ env.TEMPORAL_CLOUD_NAMESPACE }} \
+              --grpc-meta "temporal-namespace=${{ env.TEMPORAL_CLOUD_NAMESPACE }}" \
+              --tls \
+              --api-key ${{ secrets.TEMPORAL_CLOUD_API_KEY }}
+          done
+
+      - name: Delete removed Temporal users
+        continue-on-error: true
+        env:
+          removed_users: ${{ steps.detect-changes.outputs.removed_users }}
+        run: |
+          echo "$removed_users" | jq -c '.[]' | while read namespace; do
+            email=$(echo "$user" | jq -r '.email')
+
+            echo "Removing user: $email"
+
+            temporal workflow start \
+              --workflow-id $email \
+              --task-queue ${{ env.TASK_QUEUE }} \
+              --type ${{ env.DELETE_USER_WORKFLOW_TYPE }} \
+              --input "{\"Email\": \"$email\", \"Role\": \"\"}" \
+              --address ${{ env.TEMPORAL_CLOUD_ADDRESS }} \
+              --namespace ${{ env.TEMPORAL_CLOUD_NAMESPACE }} \
+              --grpc-meta "temporal-namespace=${{ env.TEMPORAL_CLOUD_NAMESPACE }}" \
+              --tls \
+              --api-key ${{ secrets.TEMPORAL_CLOUD_API_KEY }}
+          done
