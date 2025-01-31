@@ -13,10 +13,6 @@
 #     role: readonly
 # 
 
-namespaces:
-  - name: sample-project
-    region: ap-southeast-2
+namespaces: []
 
-users:
-  - email: brendan@example.com
-    role: readonly
+users: []
