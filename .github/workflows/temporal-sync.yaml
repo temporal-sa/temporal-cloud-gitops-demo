@@ -142,7 +142,7 @@ jobs:
         env:
           removed_users: ${{ steps.detect-changes.outputs.removed_users }}
         run: |
-          echo "$removed_users" | jq -c '.[]' | while read namespace; do
+          echo "$removed_users" | jq -c '.[]' | while read user; do
             email=$(echo "$user" | jq -r '.email')
 
             echo "Removing user: $email"
