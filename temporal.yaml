@@ -16,5 +16,7 @@
 namespaces:
   - name: example-project
     region: ap-southeast-2
+  - name: another-project
+    region: ap-southeast-2
 
 users: []
