@@ -17,6 +17,4 @@ namespaces:
   - name: one-i-prepared-earlier
     region: ap-southeast-2
 
-users:
-  - email: brendan@temporal.io
-    role: readonly
+users: []
