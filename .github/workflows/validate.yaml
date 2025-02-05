@@ -1,0 +1,19 @@
+name: Validate PR
+
+on:
+  pull_request:
+    paths:
+      - 'temporal.yaml'
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        
+      - name: Install Python dependencies
+        run: python -m pip install pyyaml
+
+      - name: Validate input
+        run: python validate.py --input temporal.yaml
