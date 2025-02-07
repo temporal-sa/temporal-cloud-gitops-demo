@@ -16,7 +16,5 @@
 namespaces:
   - name: one-i-prepared-earlier
     region: ap-southeast-2
-  - name: sa-demo-gitops
-    region: ap-southeast-2
 
 users: []
