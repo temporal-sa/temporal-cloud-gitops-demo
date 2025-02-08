@@ -13,10 +13,6 @@
 #     role: readonly
 # 
 
-namespaces:
-  - name: one-i-prepared-earlier
-    region: ap-southeast-2
-  - name: valid-namespace-name
-    region: ap-southeast-2
+namespaces: []
 
 users: []
