@@ -14,7 +14,7 @@
 # 
 
 namespaces:
-  - name: another-test
+  - name: yet-another-test
     region: ap-southeast-2
 
 users: []
