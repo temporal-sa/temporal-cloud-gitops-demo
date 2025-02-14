@@ -13,8 +13,6 @@
 #     role: readonly
 # 
 
-namespaces:
-  - name: again-another-test
-    region: ap-southeast-2
+namespaces: []
 
 users: []
