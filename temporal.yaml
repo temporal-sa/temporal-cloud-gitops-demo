@@ -14,7 +14,7 @@
 # 
 
 namespaces:
-  - name: one-i-prepared-earlier
+  - name: region-specific-test
     region: ap-southeast-2
 
 users: []
