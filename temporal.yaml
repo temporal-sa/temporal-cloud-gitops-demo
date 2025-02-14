@@ -13,6 +13,8 @@
 #     role: readonly
 # 
 
-namespaces: []
+namespaces:
+  - name: test-new-wf
+    region: ap-southeast-2
 
 users: []
