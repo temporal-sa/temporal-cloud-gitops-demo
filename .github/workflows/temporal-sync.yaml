@@ -3,7 +3,7 @@ name: Add/Remove Temporal Projects
 on:
   push:
     branches:
-      - main
+      - reqion-tq
     paths:
       - 'temporal.yaml'
 
@@ -12,7 +12,8 @@ env:
   CURRENT_REVISION: temporal.yaml
   TEMPORAL_CLOUD_ADDRESS: ap-southeast-2.aws.api.temporal.io:7233
   TEMPORAL_CLOUD_NAMESPACE: gitops-demo.sdvdw
-  TASK_QUEUE: github-actions
+  DEFAULT_TASK_QUEUE: ap-southeast-2
+  TASK_QUEUE_SUFFIX: _gitops
   PROJECT_WORKFLOW_TYPE: ProjectLifecycleWorkflow
   CREATE_USER_WORKFLOW_TYPE: CreateUserWorkflow
   UPDATE_USER_WORKFLOW_TYPE: UpdateUserWorkflow
@@ -58,7 +59,7 @@ jobs:
 
             temporal workflow start \
               --workflow-id $name \
-              --task-queue ${{ env.TASK_QUEUE }} \
+              --task-queue $region${{ env.TASK_QUEUE_SUFFIX }} \
               --type ${{ env.PROJECT_WORKFLOW_TYPE }} \
               --input "{\"ProjectName\": \"$name\", \"Region\": \"$region\"}" \
               --address ${{ env.TEMPORAL_CLOUD_ADDRESS }} \
@@ -102,7 +103,7 @@ jobs:
 
             temporal workflow start \
               --workflow-id $email \
-              --task-queue ${{ env.TASK_QUEUE }} \
+              --task-queue ${{ env.DEFAULT_TASK_QUEUE }}${{ env.TASK_QUEUE_SUFFIX }} \
               --type ${{ env.CREATE_USER_WORKFLOW_TYPE }} \
               --input "{\"Email\": \"$email\", \"Role\": \"$role\"}" \
               --address ${{ env.TEMPORAL_CLOUD_ADDRESS }} \
@@ -125,7 +126,7 @@ jobs:
 
             temporal workflow start \
               --workflow-id $email \
-              --task-queue ${{ env.TASK_QUEUE }} \
+              --task-queue ${{ env.DEFAULT_TASK_QUEUE }}${{ env.TASK_QUEUE_SUFFIX }} \
               --type ${{ env.UPDATE_USER_WORKFLOW_TYPE }} \
               --input "{\"Email\": \"$email\", \"Role\": \"$role\"}" \
               --address ${{ env.TEMPORAL_CLOUD_ADDRESS }} \
@@ -147,7 +148,7 @@ jobs:
 
             temporal workflow start \
               --workflow-id $email \
-              --task-queue ${{ env.TASK_QUEUE }} \
+              --task-queue ${{ env.DEFAULT_TASK_QUEUE }}${{ env.TASK_QUEUE_SUFFIX }} \
               --type ${{ env.DELETE_USER_WORKFLOW_TYPE }} \
               --input "{\"Email\": \"$email\", \"Role\": \"\"}" \
               --address ${{ env.TEMPORAL_CLOUD_ADDRESS }} \
